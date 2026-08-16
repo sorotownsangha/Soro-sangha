@@ -1534,10 +1534,7 @@ async function handlePhotoUpload(e) {
         const { data: gData, error } = await supabaseClient.from('gallery').insert({
           category: cat,
           title: title || (cat === 'vigraha' ? 'ଶ୍ରୀ ବିଗ୍ରହ' : (cat === 'nirmana' ? 'ନିର୍ମାଣ କାର୍ଯ୍ୟ' : (cat === 'puja' ? 'ପୂଜା ଓ ଉତ୍ସବ' : 'ଆଶ୍ରମ ଫଟୋ'))),
-          url: compressedBase64,
-          image_url: compressedBase64,
-          uploaded_by: state.currentUser ? state.currentUser.name : 'Admin',
-          uploaded_at: new Date().toISOString()
+          url: compressedBase64
         }).select().single();
         if (error) {
           console.error('Supabase upload error:', error);

@@ -652,9 +652,18 @@ function openAddDevoteeModal() {
 function openEditDevoteeModal(id) {
   const d = state.devotees.find(x => String(x.id) === String(id));
   if(!d) return;
+  
+  const titleEl = document.getElementById('modal-devotee-title');
+  if (titleEl) titleEl.innerText = state.lang === 'or' ? 'ଭକ୍ତ ବିବରଣୀ ସଂଶୋଧନ' : 'Edit Devotee Profile';
+
   document.getElementById('dev-form-id').value = d.id;
-  document.getElementById('dev-form-sl').value = d.sl_no;
-  document.getElementById('dev-form-name').value = d.name;
+  
+  const slInput = document.getElementById('dev-form-sl');
+  slInput.value = d.sl_no;
+  slInput.readOnly = !state.isAdmin;
+  slInput.style.opacity = state.isAdmin ? '1' : '0.7';
+
+  document.getElementById('dev-form-name').value = d.name || '';
   document.getElementById('dev-form-name-en').value = d.name_en || '';
   document.getElementById('dev-form-designation').value = d.designation || '';
   document.getElementById('dev-form-phone').value = d.phone || '';
@@ -662,8 +671,10 @@ function openEditDevoteeModal(id) {
   document.getElementById('dev-form-diksha').value = d.diksha || '';
   
   const jySelect = document.getElementById('dev-form-joined-year');
-  jySelect.innerHTML = YEARS.map(y => `<option value="${y}">${y}</option>`).join('');
-  jySelect.value = d.joined_year || '2023-24';
+  if (jySelect) {
+    jySelect.innerHTML = YEARS.map(y => `<option value="${y}">${y}</option>`).join('');
+    jySelect.value = d.joined_year || '2023-24';
+  }
   
   const smSelect = document.getElementById('dev-form-start-month');
   if (smSelect) smSelect.value = d.masika_start_month || 'apr';
@@ -677,6 +688,11 @@ function openEditDevoteeModal(id) {
     else delBtn.classList.add('hidden');
   }
 
+  // Update visibility of admin-only fields in form
+  document.querySelectorAll('#modal-devotee .admin-only').forEach(el => {
+    el.style.display = state.isAdmin ? '' : 'none';
+  });
+
   openModal('modal-devotee');
 }
 
@@ -686,20 +702,30 @@ async function saveDevoteeForm(e) {
   if (btn) { if (btn.disabled) return; btn.disabled = true; }
   
   const id = document.getElementById('dev-form-id').value;
-  const updaterName = state.currentUser ? state.currentUser.name : 'Admin';
+  const updaterName = state.currentUser ? state.currentUser.name : 'User';
   const now = new Date().toISOString();
 
+  // If not admin and trying to add a new devotee, block!
+  if (!id && !state.isAdmin) {
+    if (btn) btn.disabled = false;
+    showToast("କେବଳ Admin ନୂତନ ଭକ୍ତ ଯୋଡ଼ିପାରିବେ", "error");
+    return;
+  }
+
+  const existingDev = id ? state.devotees.find(x => String(x.id) === String(id)) : null;
+
   const data = {
-    sl_no: Number(document.getElementById('dev-form-sl').value),
-    name: document.getElementById('dev-form-name').value,
-    name_en: document.getElementById('dev-form-name-en').value,
-    designation: document.getElementById('dev-form-designation').value,
-    phone: document.getElementById('dev-form-phone').value,
-    address: document.getElementById('dev-form-address').value,
-    diksha: document.getElementById('dev-form-diksha').value,
-    joined_year: document.getElementById('dev-form-joined-year').value,
-    masika_start_month: document.getElementById('dev-form-start-month') ? document.getElementById('dev-form-start-month').value : 'apr',
-    is_masika_active: document.getElementById('dev-form-masika-active') ? document.getElementById('dev-form-masika-active').checked : false,
+    sl_no: (state.isAdmin || !existingDev) ? Number(document.getElementById('dev-form-sl').value) : existingDev.sl_no,
+    name: document.getElementById('dev-form-name').value.trim(),
+    name_en: document.getElementById('dev-form-name-en').value.trim(),
+    designation: document.getElementById('dev-form-designation').value.trim(),
+    phone: document.getElementById('dev-form-phone').value.trim(),
+    address: document.getElementById('dev-form-address').value.trim(),
+    diksha: document.getElementById('dev-form-diksha').value.trim(),
+    joined_year: (state.isAdmin || !existingDev) ? (document.getElementById('dev-form-joined-year') ? document.getElementById('dev-form-joined-year').value : '2023-24') : (existingDev.joined_year || '2023-24'),
+    masika_start_month: (state.isAdmin || !existingDev) ? (document.getElementById('dev-form-start-month') ? document.getElementById('dev-form-start-month').value : 'apr') : (existingDev.masika_start_month || 'apr'),
+    is_masika_active: (state.isAdmin || !existingDev) ? (document.getElementById('dev-form-masika-active') ? document.getElementById('dev-form-masika-active').checked : false) : (existingDev.is_masika_active === true),
+    avatar: existingDev ? existingDev.avatar : null,
     updated_at: now,
     updated_by: updaterName
   };
@@ -712,22 +738,22 @@ async function saveDevoteeForm(e) {
       const { error } = await supabaseClient.from('devotees').upsert(data);
       if (error) {
         if (btn) btn.disabled = false;
-        showToast("Error saving to database: " + error.message, "error");
+        showToast("Database error: " + error.message, "error");
         return;
       }
     }
 
     if (idx > -1) {
       state.devotees[idx] = { ...state.devotees[idx], ...data };
-      showToast("ଭକ୍ତ ବିବରଣୀ ସଂଶୋଧିତ ହେଲା", "success");
+      try { saveData(); } catch(err) {}
+      showToast("ଭକ୍ତ ବିବରଣୀ ସଫଳତାର ସହ ସଂଶୋଧିତ ହେଲା!", "success");
       try {
         history.pushState({ view: 'dashboard', bhaktaId: String(id) }, '', `#dashboard-${id}`);
       } catch(e) { console.warn("history.pushState blocked by WebView", e); }
       openDashboard(id);
     }
   } else {
-    data.id = Date.now().toString(); // temporary fallback
-    
+    data.id = Date.now().toString();
     if (supabaseClient) {
       const { data: returnData, error } = await supabaseClient.from('devotees').insert(data).select().single();
       if (error) {
@@ -735,18 +761,18 @@ async function saveDevoteeForm(e) {
         showToast("Error saving to database: " + error.message, "error");
         return;
       }
-      if (returnData) {
+      if (returnData && returnData.id) {
         data.id = returnData.id;
       }
     }
     
     state.devotees.push(data);
+    try { saveData(); } catch(err) {}
     showToast("ନୂତନ ଭକ୍ତ ଯୋଡ଼ାଗଲା", "success");
     renderBhaktaDirectory();
   }
   
   if (btn) btn.disabled = false;
-  saveData();
   closeModal('modal-devotee');
 }
 
@@ -813,7 +839,7 @@ function openDashboard(id, pushHistory = true) {
          <div class="profile-card mb-md">
             <div class="profile-photo-container">
                <img src="${d.avatar || 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23ccc%22><path d=%22M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z%22/></svg>'}" class="profile-photo" id="dash-avatar-img" />
-               <label class="photo-upload-btn admin-only" title="Upload Photo">
+               <label class="photo-upload-btn" title="Upload Photo">
                  📷 <input type="file" accept="image/*" style="display:none;" onchange="uploadAvatar(event, '${id}')" />
                </label>
             </div>
@@ -827,7 +853,7 @@ function openDashboard(id, pushHistory = true) {
                <div class="profile-item"><span class="profile-item-label">${t('dikshaDetails')}</span> <span class="profile-item-val">${d.diksha || '-'}</span></div>
             </div>
             
-            <button class="btn btn-secondary mt-md admin-only" style="width:100%" onclick="openEditDevoteeModal('${id}')">✏️ ${t('profile')} ସଂଶୋଧନ</button>
+            <button class="btn btn-secondary mt-md" style="width:100%" onclick="openEditDevoteeModal('${id}')">✏️ ${t('profile')} ସଂଶୋଧନ</button>
          </div>
 
          <!-- Identity Card -->
@@ -1020,20 +1046,29 @@ async function deleteTransaction(txId, type, devoteeId) {
 function uploadAvatar(event, id) {
   const file = event.target.files[0];
   if(!file) return;
+
+  const targetDev = state.devotees.find(d => String(d.id) === String(id));
+  if (!targetDev) {
+    showToast("Devotee not found", "error");
+    return;
+  }
+
+  showToast("ଫଟୋ ପ୍ରକ୍ରିୟାକରଣ ଚାଲିଛି...", "info");
+
   const reader = new FileReader();
   reader.onload = function(e) {
     const img = new Image();
     img.onload = async function() {
-      // Resize avatar to max 400px width/height
-      const MAX_SIZE = 400;
+      // Resize avatar to max 250px and JPEG 0.65 for high crispness & small payload (~20KB)
+      const MAX_SIZE = 250;
       let width = img.width;
       let height = img.height;
       
       if (width > height && width > MAX_SIZE) {
-        height *= MAX_SIZE / width;
+        height = Math.round(height * (MAX_SIZE / width));
         width = MAX_SIZE;
       } else if (height > MAX_SIZE) {
-        width *= MAX_SIZE / height;
+        width = Math.round(width * (MAX_SIZE / height));
         height = MAX_SIZE;
       }
       
@@ -1043,23 +1078,37 @@ function uploadAvatar(event, id) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
       
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+      const updaterName = state.currentUser ? state.currentUser.name : 'User';
+
+      if (supabaseClient) {
+        const { error: sbErr } = await supabaseClient.from('devotees').update({
+          avatar: compressedBase64,
+          updated_at: new Date().toISOString(),
+          updated_by: updaterName
+        }).eq('id', targetDev.id);
+
+        if (sbErr) {
+          console.error("Supabase avatar update error:", sbErr);
+          showToast("Database error: " + sbErr.message, "error");
+          return;
+        }
+      }
 
       const idx = state.devotees.findIndex(d => String(d.id) === String(id));
       if(idx > -1) {
         state.devotees[idx].avatar = compressedBase64;
-        if (supabaseClient) {
-          await supabaseClient.from('devotees').update({ avatar: compressedBase64 }).eq('id', String(id));
-        }
-        try { saveData(); } catch(err) {}
-        const dashImg = document.getElementById('dash-avatar-img');
-        if (dashImg) dashImg.src = compressedBase64;
-        
-        const idImg = document.querySelector(`#id-card-${id} .id-photo`);
-        if (idImg) idImg.src = compressedBase64;
-
-        showToast("ପ୍ରୋଫାଇଲ୍ ଫଟୋ ଅପଡେଟ୍ ହେଲା!", "success");
       }
+      
+      try { saveData(); } catch(err) { console.warn("Local storage update skipped", err); }
+
+      const dashImg = document.getElementById('dash-avatar-img');
+      if (dashImg) dashImg.src = compressedBase64;
+      
+      const idImg = document.querySelector(`#id-card-${id} .id-photo`);
+      if (idImg) idImg.src = compressedBase64;
+
+      showToast("ପ୍ରୋଫାଇଲ୍ ଫଟୋ ଡାଟାବେସ୍ ରେ ସଂରକ୍ଷିତ ହେଲା! ✅", "success");
     };
     img.src = e.target.result;
   };

@@ -166,31 +166,42 @@ body:not(.is-superadmin) .superadmin-only { display: none !important; }
   .navbar-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     flex-shrink: 0;
   }
   .navbar-actions .btn {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.8rem;
-    min-width: 36px;
-    min-height: 36px;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.82rem;
+    min-width: 32px;
+    min-height: 32px;
   }
-  /* Hide secondary admin buttons on mobile — only show lang toggle + login/logout */
-  .navbar-actions .connection-status,
-  .navbar-actions .admin-user-pill,
-  .navbar-actions .superadmin-only,
-  .navbar-actions .btn[onclick*="openChangePasswordModal"],
-  .navbar-actions .btn[onclick*="openDbSettingsModal"] {
+  .navbar-actions .admin-user-pill {
+    display: none !important;
+  }
+  .navbar-actions .connection-status {
+    display: none !important;
+  }
+  /* Show Super Admin and Admin buttons cleanly on mobile header when logged in */
+  body.is-superadmin .navbar-actions .superadmin-only {
+    display: inline-flex !important;
+  }
+  body.is-admin .navbar-actions .admin-only {
+    display: inline-flex !important;
+  }
+  body:not(.is-superadmin) .superadmin-only {
+    display: none !important;
+  }
+  body:not(.is-admin) .admin-only {
     display: none !important;
   }
   /* Make login/logout button always visible and prominent */
   #admin-login-btn {
     display: flex !important;
-    min-width: 40px;
-    min-height: 40px;
-    font-size: 1.1rem;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 1rem;
     background: rgba(255,255,255,0.08);
-    border-radius: 10px;
+    border-radius: 8px;
   }
 }
 .mobile-bottom-nav { display: none; }

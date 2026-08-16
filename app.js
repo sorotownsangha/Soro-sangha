@@ -356,8 +356,13 @@ async function loadData() {
         const { data: gallery, error: gErr } = await supabaseClient.from('gallery').select('*').order('uploaded_at', { ascending: false });
         if (gallery) {
           state.gallery = gallery.map(r => ({
-            id: r.id, url: r.image_url, uploader: r.uploaded_by, date: r.uploaded_at
-          }));
+            id: r.id,
+            url: r.url || r.image_url || '',
+            title: r.title || (r.category === 'vigraha' ? 'ଶ୍ରୀ ବିଗ୍ରହ' : (r.category === 'nirmana' ? 'ନିର୍ମାଣ କାର୍ଯ୍ୟ' : (r.category === 'puja' ? 'ପୂଜା ଓ ଉତ୍ସବ' : 'ଆଶ୍ରମ ଫଟୋ'))),
+            category: r.category || 'all',
+            uploader: r.uploaded_by || '',
+            date: r.uploaded_at || r.date || ''
+          })).filter(x => !!x.url);
         }
       } catch (err) { console.warn("Failed gallery:", err); }
 
@@ -1425,29 +1430,43 @@ function renderGallery(filter = 'all') {
   const grid = document.getElementById('gallery-grid');
   if (!grid) return;
 
-  let items = state.gallery || [];
-  if(filter !== 'all') items = items.filter(x => x.category === filter);
+  const catNames = {
+    vigraha: 'ଶ୍ରୀ ବିଗ୍ରହ',
+    nirmana: 'ନିର୍ମାଣ କାର୍ଯ୍ୟ',
+    puja: 'ପୂଜା ଓ ଉତ୍ସବ',
+    all: 'ଆଶ୍ରମ ଫଟୋ'
+  };
 
-  if(items.length === 0) {
+  let items = (state.gallery || []).filter(x => x && (x.url || x.image_url) && (x.url !== 'undefined' && x.image_url !== 'undefined'));
+  if (filter !== 'all') {
+    items = items.filter(x => x.category === filter);
+  }
+
+  if (items.length === 0) {
     grid.innerHTML = `
       <div class="card text-center" style="grid-column: 1/-1; padding: 3rem 1rem; color:var(--text-muted); background:var(--bg-secondary); border-radius:var(--radius-lg);">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🖼️</div>
         <p style="margin:0; font-size:1.05rem; font-weight:600; color:var(--text-primary);">କୌଣସି ଫଟୋ ନାହିଁ</p>
-        <p style="margin:0.25rem 0 0; font-size:0.85rem;">(No photos found in this album)</p>
+        <p style="margin:0.25rem 0 0; font-size:0.85rem;">(No photos found in this album. Tap + to upload)</p>
       </div>
     `;
     return;
   }
 
-  grid.innerHTML = items.map(x => `
-    <div class="gallery-item" onclick="openLightbox('${x.url}', '${(x.title || '').replace(/'/g, "\\'")}')">
-       <img src="${x.url}" class="gallery-img" loading="lazy" alt="${x.title || 'Ashram photo'}" />
-       <div class="gallery-overlay">${x.title}</div>
-       ${state.isAdmin ? `
-         <button class="btn btn-danger btn-sm" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 13px; z-index: 10;" onclick="event.stopPropagation(); deletePhoto('${x.id}')" title="Delete Photo">🗑️</button>
-       ` : ''}
-    </div>
-  `).join('');
+  grid.innerHTML = items.map(x => {
+    const photoUrl = x.url || x.image_url || '';
+    const photoTitle = (x.title && x.title !== 'undefined') ? x.title : (catNames[x.category] || 'ଆଶ୍ରମ ଫଟୋ');
+    
+    return `
+      <div class="gallery-item" onclick="openLightbox('${photoUrl}', '${photoTitle.replace(/'/g, "\\'")}')">
+         <img src="${photoUrl}" class="gallery-img" loading="lazy" alt="${photoTitle}" onerror="this.parentElement.style.display='none'" />
+         <div class="gallery-overlay">${photoTitle}</div>
+         ${state.isAdmin ? `
+           <button class="btn btn-danger btn-sm" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 13px; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);" onclick="event.stopPropagation(); deletePhoto('${x.id}')" title="Delete Photo">🗑️</button>
+         ` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 async function deletePhoto(id) {
@@ -1514,8 +1533,11 @@ async function handlePhotoUpload(e) {
       if (supabaseClient) {
         const { data: gData, error } = await supabaseClient.from('gallery').insert({
           category: cat,
-          title: title,
-          url: compressedBase64
+          title: title || (cat === 'vigraha' ? 'ଶ୍ରୀ ବିଗ୍ରହ' : (cat === 'nirmana' ? 'ନିର୍ମାଣ କାର୍ଯ୍ୟ' : (cat === 'puja' ? 'ପୂଜା ଓ ଉତ୍ସବ' : 'ଆଶ୍ରମ ଫଟୋ'))),
+          url: compressedBase64,
+          image_url: compressedBase64,
+          uploaded_by: state.currentUser ? state.currentUser.name : 'Admin',
+          uploaded_at: new Date().toISOString()
         }).select().single();
         if (error) {
           console.error('Supabase upload error:', error);
@@ -1529,7 +1551,7 @@ async function handlePhotoUpload(e) {
       const photoData = {
         id: photoId,
         category: cat,
-        title: title,
+        title: title || (cat === 'vigraha' ? 'ଶ୍ରୀ ବିଗ୍ରହ' : (cat === 'nirmana' ? 'ନିର୍ମାଣ କାର୍ଯ୍ୟ' : (cat === 'puja' ? 'ପୂଜା ଓ ଉତ୍ସବ' : 'ଆଶ୍ରମ ଫଟୋ'))),
         url: compressedBase64,
         date: new Date().toISOString()
       };

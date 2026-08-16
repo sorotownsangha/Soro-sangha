@@ -1493,7 +1493,13 @@ async function deletePhoto(id) {
   showToast("Photo deleted successfully", "info");
 }
 
-function openPhotoUploadModal() { openModal('modal-photo-upload'); }
+function openPhotoUploadModal() { 
+  if (!state.isAdmin) {
+    showToast("Access Denied: Admin only", "error");
+    return;
+  }
+  openModal('modal-photo-upload'); 
+}
 
 async function handlePhotoUpload(e) {
   e.preventDefault();

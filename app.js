@@ -632,6 +632,9 @@ function openAddDevoteeModal() {
   jySelect.innerHTML = YEARS.map(y => `<option value="${y}">${y}</option>`).join('');
   jySelect.value = state.currentYear;
   
+  const smSelect = document.getElementById('dev-form-start-month');
+  if (smSelect) smSelect.value = 'apr';
+
   const masikaCb = document.getElementById('dev-form-masika-active');
   if (masikaCb) masikaCb.checked = false;
   
@@ -657,6 +660,9 @@ function openEditDevoteeModal(id) {
   jySelect.innerHTML = YEARS.map(y => `<option value="${y}">${y}</option>`).join('');
   jySelect.value = d.joined_year || '2023-24';
   
+  const smSelect = document.getElementById('dev-form-start-month');
+  if (smSelect) smSelect.value = d.masika_start_month || 'apr';
+
   const masikaCb = document.getElementById('dev-form-masika-active');
   if (masikaCb) masikaCb.checked = d.is_masika_active === true;
   
@@ -687,6 +693,7 @@ async function saveDevoteeForm(e) {
     address: document.getElementById('dev-form-address').value,
     diksha: document.getElementById('dev-form-diksha').value,
     joined_year: document.getElementById('dev-form-joined-year').value,
+    masika_start_month: document.getElementById('dev-form-start-month') ? document.getElementById('dev-form-start-month').value : 'apr',
     is_masika_active: document.getElementById('dev-form-masika-active') ? document.getElementById('dev-form-masika-active').checked : false,
     updated_at: now,
     updated_by: updaterName
@@ -1265,12 +1272,27 @@ function renderLedgerTable() {
 
   tbody.innerHTML = devs.map(d => {
     let rowTotal = 0;
-    let monthCells = MONTHS.map(m => {
+    const devJoinedStart = parseInt((d.joined_year || '2023-24').split('-')[0]);
+    const isJoiningYear = devJoinedStart === currentFyStart;
+    const startMonthKey = d.masika_start_month || 'apr';
+    const startMonthIdx = MONTHS.indexOf(startMonthKey) !== -1 ? MONTHS.indexOf(startMonthKey) : 0;
+
+    let monthCells = MONTHS.map((m, mIdx) => {
       let val = (state.masika[state.currentYear]?.[String(d.id)]?.[m]) || (state.masika[state.currentYear]?.[Number(d.id)]?.[m]) || 0;
       let meta = state.masika_meta?.[state.currentYear]?.[String(d.id)]?.[m] || state.masika_meta?.[state.currentYear]?.[Number(d.id)]?.[m];
       rowTotal += val;
       colTotals[m] += val;
       const tooltip = getAuditTooltip(meta?.updated_at, meta?.updated_by);
+      
+      const isBeforeStartMonth = isJoiningYear && (mIdx < startMonthIdx);
+      if (isBeforeStartMonth && val === 0) {
+        return `
+          <td style="background: rgba(255,255,255,0.02); text-align: center;" title="Joined in ${tM(startMonthKey)}">
+            <span style="opacity: 0.35; font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">N/A</span>
+          </td>
+        `;
+      }
+
       return `
         <td class="${state.isAdmin ? 'cell-editable' : ''}" ${state.isAdmin ? `onclick="editCellAmount('${d.id}', '${m}', ${val})"` : ''} title="${tooltip}">
           <span class="cell-val">${val > 0 ? '₹' + val : '-'}</span>
@@ -2317,11 +2339,16 @@ function generateGroupReminder() {
   let pendingList = [];
 
   (state.devotees || []).forEach(dev => {
+    // Only check active Masika contributors
+    if (!dev.is_masika_active) return;
+
     let unpaidCount = 0;
     
     // Parse devotee's joined year (default to 2023-24 if not set)
     const devJoinedYear = dev.joined_year || '2023-24';
     const devJoinedStartYear = parseInt(devJoinedYear.split('-')[0]);
+    const startMonthKey = dev.masika_start_month || 'apr';
+    const startMonthIdx = MONTHS.indexOf(startMonthKey) !== -1 ? MONTHS.indexOf(startMonthKey) : 0;
 
     YEARS.forEach(y => {
       const fyStartYear = parseInt(y.split('-')[0]);
@@ -2337,6 +2364,21 @@ function generateGroupReminder() {
       let validMonthsForYear = (y === '2023-24') 
         ? ['aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar'] 
         : [...MONTHS];
+
+      // If this is the joining financial year, start calculating strictly from their Masika Starting Month!
+      if (fyStartYear === devJoinedStartYear) {
+        if (y === '2023-24') {
+          const augIdx = MONTHS.indexOf('aug');
+          const effectiveStartIdx = Math.max(augIdx, startMonthIdx);
+          const effectiveStartKey = MONTHS[effectiveStartIdx];
+          const sliceIdx = validMonthsForYear.indexOf(effectiveStartKey);
+          if (sliceIdx !== -1) {
+            validMonthsForYear = validMonthsForYear.slice(sliceIdx);
+          }
+        } else {
+          validMonthsForYear = validMonthsForYear.slice(startMonthIdx);
+        }
+      }
 
       // If this is the current ongoing financial year, only count up to the current calendar month
       if (fyStartYear === realFyStartYear) {

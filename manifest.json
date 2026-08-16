@@ -1,8 +1,10 @@
-﻿{
-  "name": "ସୋର ଟାଉନ ସାରସ୍ୱତ ଶାଖା ସଂଘ",
-  "short_name": "ଆଶ୍ରମ ପୋର୍ଟାଲ",
+{
+  "name": "Soro Town Saraswata Shakha Sangha",
+  "short_name": "Ashram App",
   "description": "Soro Town Saraswata Shakha Sangha — Ashram Portal & Devotee Dashboard",
+  "id": "soro-ashram-app",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#06080f",
   "theme_color": "#4f46e5",
@@ -12,13 +14,25 @@
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

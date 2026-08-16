@@ -166,20 +166,17 @@ body:not(.is-superadmin) .superadmin-only { display: none !important; }
   .navbar-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex-shrink: 0;
   }
   .navbar-actions .btn {
-    padding: 0.25rem 0.4rem;
-    font-size: 0.82rem;
-    min-width: 32px;
-    min-height: 32px;
-  }
-  .navbar-actions .admin-user-pill {
-    display: none !important;
-  }
-  .navbar-actions .connection-status {
-    display: none !important;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.8rem;
+    min-width: 30px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   /* Show Super Admin and Admin buttons cleanly on mobile header when logged in */
   body.is-superadmin .navbar-actions .superadmin-only {
@@ -196,10 +193,10 @@ body:not(.is-superadmin) .superadmin-only { display: none !important; }
   }
   /* Make login/logout button always visible and prominent */
   #admin-login-btn {
-    display: flex !important;
-    min-width: 34px;
-    min-height: 34px;
-    font-size: 1rem;
+    display: inline-flex !important;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 0.95rem;
     background: rgba(255,255,255,0.08);
     border-radius: 8px;
   }

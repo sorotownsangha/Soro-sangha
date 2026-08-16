@@ -42,20 +42,13 @@
     </nav>
 
     <div class="navbar-actions">
-      <div id="connection-status" class="connection-status offline admin-only" onclick="openDbSettingsModal()" style="cursor: pointer;">
-        <span class="connection-dot"></span>
-        <span id="connection-text">Local</span>
-      </div>
-      <span id="admin-user-pill" class="admin-user-pill admin-only" title="Logged in Admin">
-        👤 <span id="admin-user-name">Admin</span>
-      </span>
       <button class="btn btn-secondary btn-icon superadmin-only" onclick="openAdminManagementModal()" title="Manage Admins">👥</button>
       <button class="btn btn-secondary btn-icon admin-only" onclick="openChangePasswordModal()" title="Change Password">🔑</button>
-      <button class="btn btn-secondary btn-icon admin-only" onclick="openDbSettingsModal()" title="Settings">⚙️</button>
+      <button class="btn btn-secondary btn-icon admin-only" onclick="openDbSettingsModal()" title="Database Settings">⚙️</button>
       <button id="lang-toggle-btn" class="btn btn-secondary btn-sm" onclick="toggleLanguage()">
         <span style="font-weight: 700;">English</span>
       </button>
-      <button class="btn btn-secondary btn-icon" onclick="openAdminLoginModal()" id="admin-login-btn" title="Admin Login">🔒</button>
+      <button class="btn btn-secondary btn-icon" onclick="openAdminLoginModal()" id="admin-login-btn" title="Admin Login / Logout">🔒</button>
     </div>
   </header>
 

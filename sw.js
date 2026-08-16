@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'soro-ashram-v1';
+const CACHE_NAME = 'soro-ashram-v1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,7 +36,6 @@ self.addEventListener('activate', event => {
 // Network-First strategy: fetch newest from network, fallback to cache when offline
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  // Let Supabase API requests pass through normally
   if (event.request.url.includes('supabase.co')) {
     return;
   }

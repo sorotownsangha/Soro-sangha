@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="or">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ସୋର ଟାଉନ ସାରସ୍ୱତ ଶାଖା ସଂଘ | ଆଶ୍ରମ ପୋର୍ଟାଲ</title>
+  <meta name="description" content="Soro Town Saraswata Shakha Sangha — Ashram Portal & Devotee Dashboard" />
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ଆଶ୍ରମ ପୋର୍ଟାଲ" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="lang-or">
+
+  <div class="bg-gradient"></div>
+  <div class="bg-watermark"></div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="navbar-brand" onclick="showView('home')" style="cursor: pointer;">
+      <div class="logo-icon" title="ମୁଖ୍ୟ ପୃଷ୍ଠା">🙏</div>
+    </div>
+
+    <!-- Navigation Links (Desktop) -->
+    <nav class="nav-links">
+      <button class="nav-btn active" data-target="home" onclick="showView('home')" data-i18n="navHome">ମୁଖ୍ୟ ପୃଷ୍ଠା</button>
+      <button class="nav-btn" data-target="directory" onclick="showView('directory')" data-i18n="navDirectory">ଭକ୍ତ ତାଲିକା</button>
+      <button class="nav-btn" data-target="palia" onclick="showView('palia')">ପୂଜା ପାଳି</button>
+      <button class="nav-btn admin-only" data-target="ledger" onclick="showView('ledger')" data-i18n="navLedger">ମାସିକ ରେଜିଷ୍ଟର</button>
+      <button class="nav-btn admin-only" data-target="pada" onclick="showView('pada')">ପାଦ ପ୍ରଣାମୀ</button>
+      <button class="nav-btn admin-only" data-target="nirmana" onclick="showView('nirmana')">ନିର୍ମାଣ ଖାତା</button>
+      <button class="nav-btn admin-only" data-target="expenses" onclick="showView('expenses')">ଖର୍ଚ୍ଚ</button>
+      <button class="nav-btn" data-target="gallery" onclick="showView('gallery')" data-i18n="navGallery">ଗ୍ୟାଲେରୀ</button>
+    </nav>
+
+    <div class="navbar-actions">
+      <div id="connection-status" class="connection-status offline admin-only" onclick="openDbSettingsModal()" style="cursor: pointer;">
+        <span class="connection-dot"></span>
+        <span id="connection-text">Local</span>
+      </div>
+      <span id="admin-user-pill" class="admin-user-pill admin-only" title="Logged in Admin">
+        👤 <span id="admin-user-name">Admin</span>
+      </span>
+      <button class="btn btn-secondary btn-icon superadmin-only" onclick="openAdminManagementModal()" title="Manage Admins">👥</button>
+      <button class="btn btn-secondary btn-icon admin-only" onclick="openChangePasswordModal()" title="Change Password">🔑</button>
+      <button class="btn btn-secondary btn-icon admin-only" onclick="openDbSettingsModal()" title="Settings">⚙️</button>
+      <button id="lang-toggle-btn" class="btn btn-secondary btn-sm" onclick="toggleLanguage()">
+        <span style="font-weight: 700;">English</span>
+      </button>
+      <button class="btn btn-secondary btn-icon" onclick="openAdminLoginModal()" id="admin-login-btn" title="Admin Login">🔒</button>
+    </div>
+  </header>
+
+  <!-- Swipe Hint -->
+  <div id="nav-swipe-hint" class="nav-swipe-hint" style="display: none;">
+    <span style="font-size: 1.2rem;">👈</span> <span>Swipe for more modules</span>
+  </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" onscroll="hideSwipeHint()">
+    <button class="nav-btn active" data-target="home" onclick="showView('home')">
+      <span class="nav-icon">🏠</span><span data-i18n="navHome">ମୁଖ୍ୟ ପୃଷ୍ଠା</span>
+    </button>
+    <button class="nav-btn" data-target="directory" onclick="showView('directory')">
+      <span class="nav-icon">👥</span><span data-i18n="navDirectory">ଭକ୍ତ ତାଲିକା</span>
+    </button>
+    <button class="nav-btn" data-target="palia" onclick="showView('palia')">
+      <span class="nav-icon">🌺</span><span>ପୂଜା ପାଳି</span>
+    </button>
+    <button class="nav-btn admin-only" data-target="ledger" onclick="showView('ledger')">
+      <span class="nav-icon">📘</span><span data-i18n="navLedger">ମାସିକ</span>
+    </button>
+    <button class="nav-btn admin-only" data-target="pada" onclick="showView('pada')">
+      <span class="nav-icon">🙏</span><span>ପାଦ ପ୍ରଣାମୀ</span>
+    </button>
+    <button class="nav-btn admin-only" data-target="nirmana" onclick="showView('nirmana')">
+      <span class="nav-icon">🏗️</span><span>ନିର୍ମାଣ</span>
+    </button>
+    <button class="nav-btn admin-only" data-target="expenses" onclick="showView('expenses')">
+      <span class="nav-icon">💸</span><span>ଖର୍ଚ୍ଚ</span>
+    </button>
+    <button class="nav-btn" data-target="gallery" onclick="showView('gallery')">
+      <span class="nav-icon">🖼️</span><span data-i18n="navGallery">ଗ୍ୟାଲେରୀ</span>
+    </button>
+  </nav>
+
+  <main class="app-container">
+
+    <!-- ========================================== -->
+    <!-- VIEW: HOME (Ashram Landing Page)           -->
+    <!-- ========================================== -->
+    <section id="view-home" class="view-section active fade-in">
+      
+      <!-- Big Jayaguru Header with Dynamic Greeting -->
+      <div class="home-top-header text-center mb-md">
+        <h1 class="jayaguru-title">ଜୟଗୁରୁ</h1>
+        <p class="sangha-subtitle">ସୋର ଟାଉନ ସାରସ୍ୱତ ଶାଖା ସଂଘ</p>
+        <div id="dynamic-greeting" class="dynamic-greeting mt-sm"></div>
+      </div>
+
+      <!-- Scrolling Announcement Marquee -->
+      <div id="marquee-container" class="marquee-container mb-xl hidden" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border-left: 4px solid #10b981; border-right: 4px solid #10b981; border-radius: var(--radius-md); padding: 0.6rem 1rem; display: flex; align-items: center; gap: 12px; overflow: hidden; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <span style="font-size: 1.25rem; flex-shrink: 0; animation: pulse 2s infinite;">📢</span>
+        <div class="marquee-content-wrapper" style="flex: 1; overflow: hidden; position: relative;">
+          <div class="marquee-text" id="marquee-text" style="display: inline-block; padding-left: 100%; color: var(--text-primary); font-weight: 500; font-size: 1rem; letter-spacing: 0.3px;">
+            <!-- Content injected by app.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Hero Banner -->
+      <div class="hero-showcase mb-xl">
+        <div class="hero-content-advanced">
+           <div class="thakur-avatar-glow">
+             <img src="thakur.jpg" alt="Sri Sri Thakur Nigamananda" class="thakur-img-round" id="hero-thakur-img" />
+           </div>
+           <h1 class="hero-title-glowing" data-i18n="sriSriThakur">ଶ୍ରୀ ଶ୍ରୀ ଠାକୁର ନିଗମାନନ୍ଦ ପରମହଂସ ଦେବ</h1>
+           <p class="hero-quote-elegant" data-i18n="dailyVani">"ସର୍ବେ ଭବନ୍ତୁ ସୁଖିନଃ, ସର୍ବେ ସନ୍ତୁ ନିରାମୟାଃ"</p>
+        </div>
+      </div>
+
+      <!-- Admin Announcements Management (Premium UI) -->
+      <div id="admin-broadcast-section" class="mb-xl admin-only" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        
+        <!-- Gradient header block -->
+        <div style="background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(16,185,129,0.05) 100%); border-bottom: 1px solid var(--border); padding: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+             <h3 style="margin: 0; color: #fff; display: flex; align-items: center; gap: 12px; font-size: 1.25rem;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #818cf8; box-shadow: 0 0 15px rgba(99,102,241,0.2);">
+                  🔔
+                </div>
+                Live Broadcasts
+             </h3>
+             <span style="background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 5px;">
+               <span class="connection-dot" style="background: #34d399; width: 6px; height: 6px; display: inline-block;"></span> Active
+             </span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; margin-bottom: 0; line-height: 1.5;">
+            Broadcast scrolling announcements to all users. Next Puja Pali is automatically managed.
+          </p>
+        </div>
+
+        <div style="padding: 1.5rem;">
+          <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Message</label>
+              <textarea id="announcement-msg" class="form-control" rows="2" placeholder="Write your announcement..." style="resize: none;"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Valid Until (Expiry)</label>
+                <div style="position: relative;">
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; opacity: 0.7;">📅</span>
+                  <input type="date" id="announcement-expiry" class="form-control" style="padding-left: 2.5rem;" />
+                </div>
+              </div>
+              <button id="btn-add-announcement" class="btn btn-primary" onclick="addAnnouncement()" style="padding: 0 1.5rem; border-radius: var(--radius-md); box-shadow: 0 4px 15px rgba(99,102,241,0.4);">
+                <span style="font-size: 1.2rem;">🚀</span> Publish
+              </button>
+            </div>
+          </div>
+
+          <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">Currently Broadcasting</h4>
+          <div id="admin-announcements-list" style="display: flex; flex-direction: column; gap: 10px;">
+             <!-- List injected by app.js -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: DIRECTORY (Bhakta List)              -->
+    <!-- ========================================== -->
+    <section id="view-directory" class="view-section fade-in">
+      
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="dir-search" class="search-input" placeholder="ଭକ୍ତ ଖୋଜନ୍ତୁ..." oninput="renderBhaktaDirectory()" />
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary admin-only" onclick="openAddDevoteeModal()">
+            <span>➕</span> <span data-i18n="addDevotee">ନୂତନ ଭକ୍ତ</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="bhakta-grid" class="bhakta-grid mt-md">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: DASHBOARD (Individual Profile)       -->
+    <!-- ========================================== -->
+    <section id="view-dashboard" class="view-section fade-in">
+      <button class="btn btn-ghost mb-md" onclick="showView('directory')">← <span data-i18n="backToList">ଫେରନ୍ତୁ</span></button>
+      
+      <div id="dashboard-content">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- VIEW: LEDGER (Master Table)                -->
+    <!-- ========================================== -->
+    <section id="view-ledger" class="view-section fade-in">
+      
+      <!-- Summary Strip -->
+      <div id="ledger-stats-strip" class="ledger-summary-strip">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="toolbar" style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:space-between; align-items:center;">
+        <div class="toolbar-left" style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; flex:1; min-width:260px;">
+          <div class="search-wrapper" style="flex:1; min-width:180px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="ledger-search" class="search-input" placeholder="ଭକ୍ତ ଖୋଜନ୍ତୁ..." oninput="renderLedgerTable()" />
+          </div>
+          <div class="year-tabs" id="year-tabs" style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div class="toolbar-right" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+           <button class="btn btn-primary admin-only" onclick="generateGroupReminder()"><span>📢</span> <span data-i18n="sendReminder">ରିମାଇଣ୍ଡର</span></button>
+           <button class="btn btn-secondary" onclick="exportToCSV()"><span>📥</span> <span data-i18n="exportData">ଏକ୍ସପୋର୍ଟ</span></button>
+           <button class="btn btn-secondary" onclick="printLedger()"><span>🖨️</span> <span data-i18n="printRegister">ପ୍ରିଣ୍ଟ</span></button>
+        </div>
+      </div>
+
+      <section class="table-panel mt-md">
+        <div class="table-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border);">
+          <h2 data-i18n="masikaRegister" style="margin:0; font-size: 1.05rem;">ମାସିକ ପ୍ରଣାମୀ ରେଜିଷ୍ଟର</h2>
+          <span style="font-size:0.75rem; color:var(--accent-light); background:rgba(217,119,6,0.1); padding:3px 8px; border-radius:4px;">👈 ସ୍କ୍ରୋଲ୍ କରନ୍ତୁ 👉</span>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table" id="pranami-table">
+            <thead id="ledger-head"></thead>
+            <tbody id="ledger-body"></tbody>
+            <tfoot id="ledger-foot"></tfoot>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: NIRMANA DONORS (Admin Only)          -->
+    <!-- ========================================== -->
+    <section id="view-nirmana" class="view-section fade-in">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <h2>ନିର୍ମାଣ ଦାତା ତାଲିକା (Nirmana Donors)</h2>
+        </div>
+        <div class="toolbar-right">
+           <button class="btn btn-primary" onclick="openAddNirmanaDonorModal()"><span>➕</span> ନୂତନ ଦାତା</button>
+        </div>
+      </div>
+      
+      <div id="nirmana-content" class="mt-md">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: PADA PRANAMI (Admin Only)            -->
+    <!-- ========================================== -->
+    <section id="view-pada" class="view-section fade-in">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <h2>ପାଦ ପ୍ରଣାମୀ ରେଜିଷ୍ଟର (Pada Pranami)</h2>
+        </div>
+        <div class="toolbar-right">
+           <button class="btn btn-primary" onclick="openPadaGlobalModal()"><span>➕</span> ପାଦ ପ୍ରଣାମୀ ଯୋଡନ୍ତୁ</button>
+        </div>
+      </div>
+      
+      <div id="pada-content" class="mt-md">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: PUJA PALI                            -->
+    <!-- ========================================== -->
+    <section id="view-palia" class="view-section fade-in">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <h2>ପାଳି ତାଲିକା (Pali Schedule)</h2>
+        </div>
+        <div class="toolbar-right">
+           <button class="btn btn-primary admin-only" onclick="openPaliaModal()"><span>➕</span> ପାଳି ଯୋଡନ୍ତୁ</button>
+        </div>
+      </div>
+      
+      <div id="palia-content" class="mt-md">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: EXPENSES (Admin Only)                -->
+    <!-- ========================================== -->
+    <section id="view-expenses" class="view-section fade-in">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <h2>ଖର୍ଚ୍ଚ ଓ ହିସାବ (Expenses)</h2>
+        </div>
+        <div class="toolbar-right">
+           <button class="btn btn-primary" onclick="openAddExpenseModal()"><span>➖</span> ନୂତନ ଖର୍ଚ୍ଚ ଯୋଡନ୍ତୁ</button>
+        </div>
+      </div>
+      
+      <div id="expenses-content" class="mt-md">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: GALLERY (Photos)                     -->
+    <!-- ========================================== -->
+    <section id="view-gallery" class="view-section fade-in">
+       <div class="toolbar">
+        <div class="toolbar-left">
+           <h2 data-i18n="galleryTitle">ଆଶ୍ରମ ଗ୍ୟାଲେରୀ</h2>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="openPhotoUploadModal()">
+            <span>📸</span> <span data-i18n="uploadPhoto">ଫଟୋ ଅପଲୋଡ୍</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="gallery-filters mt-md mb-md" id="gallery-filters">
+         <button class="filter-btn active" data-filter="all" data-i18n="all">ସବୁ</button>
+         <button class="filter-btn" data-filter="bigraha" data-i18n="catBigraha">ଶ୍ରୀ ବିଗ୍ରହ</button>
+         <button class="filter-btn" data-filter="nirmana" data-i18n="catNirmana">ନିର୍ମାଣ କାର୍ଯ୍ୟ</button>
+         <button class="filter-btn" data-filter="puja" data-i18n="catPuja">ପୂଜା ଓ ଉତ୍ସବ</button>
+      </div>
+
+      <div class="gallery-grid" id="gallery-grid">
+         <!-- Rendered by JS -->
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ============================================================== -->
+  <!-- MODALS                                                         -->
+  <!-- ============================================================== -->
+
+  <!-- Add/Edit Devotee Modal -->
+  <div id="modal-devotee" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-devotee-title" data-i18n="addDevotee">ଭକ୍ତ ଯୋଡ଼ନ୍ତୁ</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-devotee')">✕</button>
+      </div>
+      <form onsubmit="saveDevoteeForm(event)">
+        <div class="modal-body">
+          <input type="hidden" id="dev-form-id" />
+          <div class="form-group">
+            <label data-i18n="slNo">କ୍ରମିକ (Sl No)</label>
+            <input type="number" id="dev-form-sl" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ନାମ (Odia)</label>
+            <input type="text" id="dev-form-name" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Name (English)</label>
+            <input type="text" id="dev-form-name-en" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="designation">ପଦବୀ (Designation)</label>
+            <input type="text" id="dev-form-designation" class="form-control" placeholder="Optional" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="phone">ମୋବାଇଲ୍ (Phone)</label>
+            <input type="tel" id="dev-form-phone" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="address">ଠିକଣା (Address)</label>
+            <input type="text" id="dev-form-address" class="form-control" />
+          </div>
+           <div class="form-group">
+             <label data-i18n="dikshaDetails">ଦୀକ୍ଷା ବିବରଣୀ (Diksha)</label>
+             <input type="text" id="dev-form-diksha" class="form-control" placeholder="Optional" />
+          </div>
+          <div class="form-group">
+             <label>Joined Year (ଯୋଗଦାନ ବର୍ଷ)</label>
+             <select id="dev-form-joined-year" class="form-control">
+               <!-- Populated by JS -->
+             </select>
+          </div>
+          <div class="form-group admin-only" style="display: flex; align-items: center; gap: 10px; margin-top: 15px; padding: 10px; background: rgba(16,185,129,0.05); border-radius: var(--radius-sm); border: 1px solid rgba(16,185,129,0.2);">
+             <input type="checkbox" id="dev-form-masika-active" style="width: 20px; height: 20px; cursor: pointer;" />
+             <label for="dev-form-masika-active" style="margin: 0; cursor: pointer; color: var(--success); font-weight: 600;">Enable Masika Pranami (ମାସିକ ପ୍ରଣାମୀ)</label>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="btn btn-danger admin-only hidden" id="dev-form-delete-btn" onclick="deleteDevotee()">🗑️ ଡିଲିଟ୍</button>
+          <div style="display: flex; gap: var(--space-sm);">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('modal-devotee')" data-i18n="cancel">ବାତିଲ</button>
+            <button type="submit" class="btn btn-primary" data-i18n="save">ସଂରକ୍ଷଣ</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Photo Upload Modal -->
+  <div id="modal-photo-upload" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 data-i18n="uploadPhoto">ଫଟୋ ଅପଲୋଡ୍</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-photo-upload')">✕</button>
+      </div>
+      <form onsubmit="handlePhotoUpload(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label data-i18n="category">ବିଭାଗ (Category)</label>
+            <select id="upload-category" class="form-control" required>
+               <option value="bigraha" data-i18n="catBigraha">ଶ୍ରୀ ବିଗ୍ରହ</option>
+               <option value="nirmana" data-i18n="catNirmana">ନିର୍ମାଣ କାର୍ଯ୍ୟ</option>
+               <option value="puja" data-i18n="catPuja">ପୂଜା ଓ ଉତ୍ସବ</option>
+            </select>
+          </div>
+          <div class="form-group">
+             <label data-i18n="photoTitle">ଶୀର୍ଷକ (Title)</label>
+             <input type="text" id="upload-title" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label data-i18n="selectFile">ଫାଇଲ୍ ବାଛନ୍ତୁ</label>
+            <input type="file" id="upload-file" class="form-control" accept="image/*" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+           <button type="button" class="btn btn-secondary" onclick="closeModal('modal-photo-upload')" data-i18n="cancel">ବାତିଲ</button>
+           <button type="submit" class="btn btn-primary" data-i18n="upload">ଅପଲୋଡ୍</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Record Payment Modal (Dashboard Context) -->
+  <div id="modal-payment-dash" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 data-i18n="addPayment">ପ୍ରଣାମୀ ଦାଖଲ</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-payment-dash')">✕</button>
+      </div>
+      <form onsubmit="saveDashboardPayment(event)">
+        <div class="modal-body">
+          <input type="hidden" id="pay-dash-devotee" />
+          <input type="hidden" id="pay-dash-type" /> <!-- masika, nirmana, pada -->
+          
+          <div class="form-group" id="pay-dash-year-grp">
+            <label>ଆର୍ଥିକ ବର୍ଷ (Financial Year)</label>
+            <select id="pay-dash-year" class="form-control"></select>
+          </div>
+          <div class="form-group" id="pay-dash-month-grp">
+            <label data-i18n="selectMonth">ମାସ (Month)</label>
+            <select id="pay-dash-month" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="amount">ରାଶି (Amount ₹)</label>
+            <input type="number" id="pay-dash-amount" class="form-control" min="1" required />
+          </div>
+           <div class="form-group" id="pay-dash-note-grp">
+            <label data-i18n="notes">ଟିପ୍ପଣୀ (Notes/Purpose)</label>
+            <input type="text" id="pay-dash-note" class="form-control" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-payment-dash')" data-i18n="cancel">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">ଦାଖଲ କରନ୍ତୁ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Nirmana Donor Modal -->
+  <div id="modal-nirmana-donor" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-nirmana-title">ନିର୍ମାଣ ଦାତା ଯୋଡନ୍ତୁ</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-nirmana-donor')">✕</button>
+      </div>
+      <form onsubmit="saveNirmanaDonor(event)">
+        <div class="modal-body">
+          <input type="hidden" id="nirmana-id" />
+          <div class="form-group">
+            <label>ନାମ (Name)</label>
+            <input type="text" id="nirmana-name" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ଫୋନ୍ ନମ୍ବର (Phone)</label>
+            <input type="text" id="nirmana-phone" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>ଠିକଣା (Address)</label>
+            <input type="text" id="nirmana-address" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>ପ୍ରଦାନ ରାଶି (Amount ₹)</label>
+            <input type="number" id="nirmana-amount" class="form-control" min="1" required />
+          </div>
+          <div class="form-group">
+            <label>ତାରିଖ (Date)</label>
+            <input type="date" id="nirmana-date" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ବିବରଣୀ (Note)</label>
+            <input type="text" id="nirmana-note" class="form-control" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-nirmana-donor')">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary">ସଂରକ୍ଷଣ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Pada Global Modal (Admin Only) -->
+  <div id="modal-pada-global" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>ପାଦ ପ୍ରଣାମୀ ଯୋଡନ୍ତୁ</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-pada-global')">✖</button>
+      </div>
+      <form onsubmit="savePadaGlobal(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ପ୍ରଦାନ ରାଶି (Amount ₹)</label>
+            <input type="number" id="pada-global-amount" class="form-control" min="1" required />
+          </div>
+          <div class="form-group">
+            <label>ତାରିଖ (Date)</label>
+            <input type="date" id="pada-global-date" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ବିବରଣୀ (Note)</label>
+            <input type="text" id="pada-global-note" class="form-control" placeholder="Optional note..." />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pada-global')">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary">ସେଭ୍ କରନ୍ତୁ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Puja Pali Modal (Admin Only) -->
+  <div id="modal-palia" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>ପାଳି ଯୋଡନ୍ତୁ</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-palia')">✖</button>
+      </div>
+      <form onsubmit="savePalia(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ପାଳି ତାରିଖ (Pali Date)</label>
+            <input type="date" id="palia-date" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ଭକ୍ତ ମନୋନୀତ କରନ୍ତୁ (Select Devotees)</label>
+            <div id="palia-devotees-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+              <!-- Checkboxes Populated by JS -->
+            </div>
+            <small class="text-muted mt-sm">ଏକାଧିକ ଭକ୍ତଙ୍କୁ ବାଛି ପାରିବେ।</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-palia')">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary">ସେଭ୍ କରନ୍ତୁ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Expense Modal (Admin Only) -->
+  <div id="modal-expense" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>ଖର୍ଚ୍ଚ ଯୋଡନ୍ତୁ (Add Expense)</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-expense')">✕</button>
+      </div>
+      <form onsubmit="saveExpense(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ତାରିଖ (Date)</label>
+            <input type="date" id="expense-date" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ଉତ୍ସ (Source Fund)</label>
+            <select id="expense-source" class="form-control" required>
+              <option value="masika">ମାସିକ ପ୍ରଣାମୀରୁ (From Masika)</option>
+              <option value="pada">ପାଦ ପ୍ରଣାମୀରୁ (From Pada)</option>
+              <option value="nirmana">ଆଶ୍ରମ ନିର୍ମାଣରୁ (From Nirmana)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ରାଶି (Amount ₹)</label>
+            <input type="number" id="expense-amount" class="form-control" min="1" required />
+          </div>
+          <div class="form-group">
+            <label>ଖର୍ଚ୍ଚ ବିବରଣୀ (Expense Note)</label>
+            <input type="text" id="expense-note" class="form-control" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-expense')" data-i18n="cancel">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">ସଂରକ୍ଷଣ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Unified Receipt Modal -->
+  <div id="modal-receipt-unified" class="modal-overlay">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 data-i18n="receipt">ରସିଦ (Receipt)</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-receipt-unified')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="unified-receipt-area" class="receipt-card">
+           <!-- Rendered by JS -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+         <button type="button" class="btn btn-secondary" onclick="shareUnifiedReceiptWhatsApp()">
+            <span>💬</span> WhatsApp
+         </button>
+         <button type="button" class="btn btn-primary" onclick="printElement('unified-receipt-area')">
+            <span>🖨️</span> <span data-i18n="printReceipt">ପ୍ରିଣ୍ଟ</span>
+         </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Parichaya Patra Print Area (Hidden unless printing) -->
+  <div id="print-area-wrapper" style="display:none;"></div>
+
+  <!-- DB Settings Modal (Keep existing structure) -->
+  <div id="modal-db-settings" class="modal-overlay">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <h2 data-i18n="dbSettings">କ୍ଲାଉଡ୍ ଡାଟାବେସ୍ (Supabase)</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-db-settings')">✕</button>
+      </div>
+      <div class="modal-body">
+         <form onsubmit="saveDbSettings(event)">
+          <div class="form-group">
+            <label>Supabase Project URL</label>
+            <input type="url" id="sb-url-input" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Supabase Anon Public Key</label>
+            <input type="password" id="sb-key-input" class="form-control" />
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Connect</button>
+            <button type="button" class="btn btn-secondary" onclick="testSupabaseConnection()">Test</button>
+          </div>
+        </form>
+
+        <hr style="border-color: var(--border); margin: 1.5rem 0;" />
+        <div class="form-group">
+          <label style="font-weight: 700; color: #fbbf24;">📦 ଡାଟା ବ୍ୟାକଅପ୍ (Data Backup & Export)</label>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+            ଏହି ବଟନ୍ କ୍ଲିକ୍ କରି ଆପଣଙ୍କ ସମସ୍ତ ଭକ୍ତ, ମାସିକ ପ୍ରଣାମୀ, ପାଦ ପ୍ରଣାମୀ, ନିର୍ମାଣ ଦାତା ଓ ଖର୍ଚ୍ଚ ଡାଟାର ସମ୍ପୂର୍ଣ୍ଣ Backup ଫାଇଲ୍ ଡାଉନଲୋଡ୍ କରି ନିଜ ପାଖରେ ସୁରକ୍ଷିତ ରଖିପାରିବେ।
+          </p>
+          <button type="button" class="btn btn-primary" onclick="exportDatabaseBackup()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--gold-gradient); color: #000; font-weight: 700; margin-bottom: 0.8rem;">
+            📥 Download Complete Backup (JSON)
+          </button>
+          <input type="file" id="db-backup-file-input" accept=".json" style="display:none;" onchange="importDatabaseBackup(event)" />
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('db-backup-file-input').click()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            📤 Restore / Import Backup (JSON)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="html5-qrcode.min.js" type="text/javascript"></script>
+  <!-- Admin Login Modal -->
+  <div id="modal-admin-login" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 data-i18n="adminLogin">Admin Login</h2>
+        <button class="btn-icon" onclick="closeModal('modal-admin-login')">❌</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="admin-username" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="admin-password" class="form-control" required />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Super Admin: Admin Management Modal -->
+  <div id="modal-admin-manage" class="modal-overlay">
+    <div class="modal" style="max-width: 720px;">
+      <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">👥 ଆଡମିନ୍ ପରିଚାଳନା (Admin Management)</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-admin-manage')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <p style="margin:0; color:var(--text-muted); font-size:0.85rem;">Super Admin can add, remove, and reset passwords for admins.</p>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openAddAdminModal()">➕ ନୂତନ Admin</button>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ନାମ (Name)</th>
+                <th>Username</th>
+                <th>ଭୂମିକା (Role)</th>
+                <th>ଆକ୍ସନ୍ (Actions)</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body">
+              <!-- Rendered via renderAdminList() -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Admin -->
+  <div id="modal-add-admin" class="modal-overlay">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2>ନୂତନ Admin ଯୋଡ଼ନ୍ତୁ (Create Admin)</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-add-admin')">✕</button>
+      </div>
+      <form onsubmit="saveAdminForm(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Admin ନାମ (Full Name)</label>
+            <input type="text" id="new-admin-name" class="form-control" placeholder="e.g. Diptikanta Panda" required />
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="new-admin-username" class="form-control" placeholder="e.g. dipti_admin" required />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="new-admin-password" class="form-control" placeholder="••••••••" required />
+          </div>
+          <div class="form-group">
+            <label>ଭୂମିକା (Role)</label>
+            <select id="new-admin-role" class="form-control" required>
+              <option value="admin">Admin (ସାଧାରଣ ଆଡମିନ୍)</option>
+              <option value="superadmin">Super Admin (ସର୍ବୋଚ୍ଚ ପ୍ରଶାସକ)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-admin')">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary">ସଂରକ୍ଷଣ (Save)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Change Password (Self-Service) -->
+  <div id="modal-change-password" class="modal-overlay">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2>🔑 ପାସୱାର୍ଡ଼ ପରିବର୍ତ୍ତନ (Change Password)</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-change-password')">✕</button>
+      </div>
+      <form onsubmit="saveChangePassword(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ପୁରୁଣା Password (Current Password)</label>
+            <input type="password" id="change-old-password" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>ନୂତନ Password (New Password)</label>
+            <input type="password" id="change-new-password" class="form-control" minlength="4" required />
+          </div>
+          <div class="form-group">
+            <label>ନୂତନ Password ନିଶ୍ଚିତ କରନ୍ତୁ (Confirm New Password)</label>
+            <input type="password" id="change-confirm-password" class="form-control" minlength="4" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-change-password')">ବାତିଲ</button>
+          <button type="submit" class="btn btn-primary">ଅପଡେଟ୍ କରନ୍ତୁ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- In-App PWA Install Banner -->
+  <div id="pwa-install-banner" class="pwa-install-banner hidden">
+    <div class="pwa-banner-icon">📲</div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">ଆଶ୍ରମ ଆପ୍ Install କରନ୍ତୁ</div>
+      <div class="pwa-banner-desc">୧-କ୍ଲିକ୍ ରେ ମୋବାଇଲ୍ ରେ ସହଜରେ ଖୋଲନ୍ତୁ</div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="btn btn-primary btn-sm" onclick="installPWA()">Install</button>
+      <button class="btn btn-ghost btn-sm" onclick="dismissInstallBanner()" title="Dismiss">✕</button>
+    </div>
+  </div>
+
+  <!-- Lightbox Modal for Gallery Photos -->
+  <div id="gallery-lightbox" class="lightbox-modal" onclick="closeLightbox(event)">
+    <button class="lightbox-close-btn" onclick="closeLightboxDirect()">✕</button>
+    <img id="lightbox-image" class="lightbox-img" src="" alt="Enlarged view" />
+    <div id="lightbox-caption" class="lightbox-caption"></div>
+  </div>
+
+  <link rel="manifest" href="./manifest.json" />
+  
+  <!-- Local Bundled Libraries (To prevent WebIntoApp Offline CDN timeout errors) -->
+  <script src="supabase.min.js"></script>
+  <script src="lib/chart.js"></script>
+  <script src="qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
